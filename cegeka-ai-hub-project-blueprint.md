@@ -23,7 +23,7 @@ The AI Hub should make AI approachable and useful in everyday work. It should he
 | Authentication | **Experiment:** none (public demo). **After adoption:** Microsoft Entra ID / company account, enforced by the hosting platform |
 | Initial content owners | AI Coach team |
 | Initial language | English; design for future multilingual support |
-| Branding | Cegeka branding with a dedicated AI Hub identity |
+| Branding | Cegeka branding with a dedicated AI Hub identity, applied through the Cegeka branding, style, icon, and illustration skills (section 10.4) |
 | Builder's role | Combination of educator, builder, and connector |
 
 Infrastructure choices and technology standards must be confirmed against Cegeka's approved architecture and platform guidelines before implementation.
@@ -352,7 +352,7 @@ Guardrails for the public demo:
 
 - Only sample or public-safe content: no internal policies, internal links, real tool approval statuses, client names, champion names or contact details, or anything confidential.
 - Show a visible banner: "Prototype — not an official Cegeka service. Sample content only."
-- Do not use official Cegeka logos or brand assets unless the brand/communications team allows it; use a neutral theme or placeholder identity.
+- Apply Cegeka branding through the Cegeka skills (section 10.4). Confirm with the brand/communications team whether the official logo may appear on a public site before adding it.
 - Add `<meta name="robots" content="noindex">` and a `robots.txt` that disallows indexing, to reduce discovery (this is not access control).
 - Treat AI Champions and tool availability as placeholder data in the demo.
 
@@ -552,8 +552,33 @@ src/app/
 - Keep filters and search terms in the URL query string so results can be shared and bookmarked.
 - Do not introduce NgRx or other state libraries; there is little state.
 - Ensure responsive layouts and keyboard accessibility.
-- Use the approved Cegeka design system where available; otherwise Angular CDK/Angular Material with a theme aligned with Cegeka branding.
+- Use the approved Cegeka design system where available; otherwise Angular CDK/Angular Material with a theme built from the Cegeka branding skills (section 10.4).
 - Prepare UI text for translation (Angular i18n or a runtime translation library).
+
+### 10.4 Branding and visual assets (Cegeka skills)
+
+The look and feel must follow Cegeka branding. Use the Cegeka GitHub Copilot skills installed on the builder's machine for all styling and visual assets, instead of inventing colours, fonts, icons, or illustrations.
+
+| Need | Skill to use |
+|---|---|
+| Brand colours, typography, official logos, icon contrast | `cegeka-branding` |
+| Styling the Angular app: theme, components, responsive layout, light/dark mode, accessibility | `cegeka-apps-style` |
+| Functional UI icons (navigation, actions, content-type icons) | `cegeka-icons-use` (existing Cegeka SVG icons) |
+| Concept icons, for example for categories, pillars (Discover, Learn, Experiment, Share), or tool types | `cegeka-icons-illustrative-create` |
+| Hero images, empty states, and spot illustrations | `cegeka-illustrations-create` |
+| Labelled diagrams with avatars (for example how content flows, role overviews) | `cegeka-illustrated-diagrams-create` |
+| Infographics in guides (processes, maturity models, timelines) | `cegeka-infographics-create` |
+| Presentations to pitch the demo | `cegeka-presentations-create` |
+
+Rules:
+
+- Load the relevant skill before creating or changing styles or visual assets; do not hand-pick brand colours or draw custom icons outside the skills.
+- Implement brand colours, typography, spacing, and light/dark themes as design tokens (CSS custom properties or Angular Material theme variables) in one place, derived from `cegeka-branding`.
+- Store generated SVGs in the repository (for example `src/assets/brand/`, `src/assets/icons/`, `content/_media/`), optimized, with meaningful `title`/`alt` text for accessibility.
+- Prefer `currentColor` SVG icons for UI so they follow the theme.
+- Keep a short `docs/branding.md` that records which tokens and assets came from which skill, so others can regenerate or extend them.
+- These skills are available on the builder's machine only. Contributors without them should reuse existing tokens and assets rather than adding new visual styles.
+- The public demo uses Cegeka branding (colours, typography, style, icons). Check with the brand/communications team whether the official Cegeka logo and icon assets may appear on a public site; until confirmed, keep the "Prototype — not an official Cegeka service" banner.
 
 ---
 
@@ -719,7 +744,7 @@ The MVP is ready for pilot when:
 
 | Risk | Mitigation |
 |---|---|
-| Public demo exposes internal information or looks like an official Cegeka service | Sample/public-safe content only, prototype banner, no official logos without permission, `noindex` |
+| Public demo exposes internal information or looks like an official Cegeka service | Sample/public-safe content only, prototype banner, logo use confirmed with brand team, `noindex` |
 | Deploying Azure resources in a client tenant instead of the Cegeka tenant | Explicit tenant login and checks (section 7); pinned tenant and subscription IDs |
 | Single builder (bus factor of one) | Keep documentation, ADRs, and setup scripts current; keep the stack mainstream |
 | Content goes stale after launch | Owners, review dates, and automated review reminders |
@@ -734,7 +759,7 @@ The MVP is ready for pilot when:
 
 1. After adoption: which hosting and access restrictions (Azure Static Web Apps Free with invitations, Standard, App Service with Easy Auth, or other), and which Azure subscription in the Cegeka tenant?
 2. After adoption: should the repository move to a Cegeka GitHub organisation or Azure DevOps, and become private/internal?
-3. May the public demo use Cegeka branding?
+3. May the public demo show the official Cegeka logo and Cegeka icon assets?
 4. Are guest/external accounts allowed?
 5. Is there a Cegeka design system or Angular component library to use?
 6. Which data-classification scheme should tool pages reference?
@@ -761,12 +786,13 @@ When using this document as context in an IDE-based AI assistant, follow these i
 7. Keep the content build and Angular types aligned; share the types.
 8. Never let `Draft` or `Archived` content reach the build output.
 9. While the site is a public GitHub Pages demo, never add internal or confidential content, and do not add client-side login as a substitute for hosting-level access control.
-10. Add tests alongside features, especially for content validation and sanitization.
-11. Do not invent Entra tenant IDs, client IDs, secrets, URLs, subscription details, or company-specific configuration. Use clearly named placeholders and document what an administrator must provide.
-12. Do not claim that a tool, provider, or AI service is company-approved unless that status is explicitly confirmed.
-13. Keep the MVP free of LLM integrations unless the scope is explicitly changed.
-14. Maintain a concise implementation plan and update it as milestones are completed.
-15. Ask focused questions only when a decision blocks safe or correct implementation. Otherwise, make conservative, clearly documented assumptions.
+10. Use the Cegeka skills for all branding, styling, icons, illustrations, and infographics (section 10.4). Do not invent brand colours, fonts, or icon styles.
+11. Add tests alongside features, especially for content validation and sanitization.
+12. Do not invent Entra tenant IDs, client IDs, secrets, URLs, subscription details, or company-specific configuration. Use clearly named placeholders and document what an administrator must provide.
+13. Do not claim that a tool, provider, or AI service is company-approved unless that status is explicitly confirmed.
+14. Keep the MVP free of LLM integrations unless the scope is explicitly changed.
+15. Maintain a concise implementation plan and update it as milestones are completed.
+16. Ask focused questions only when a decision blocks safe or correct implementation. Otherwise, make conservative, clearly documented assumptions.
 
 ### Recommended first task for the IDE assistant
 

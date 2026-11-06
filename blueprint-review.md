@@ -32,3 +32,7 @@ ASP.NET Core API, EF Core, Azure SQL/PostgreSQL, Blob Storage, MSAL, admin UI an
 ## Open questions
 
 See section 16 of the blueprint: hosting approval, GitHub vs Azure DevOps, guest access, design system, data-classification scheme, who confirms tool status, AI Champion list and consent, analytics, next languages, and support owner.
+
+## Branding
+
+All styling and visual assets use the Cegeka skills installed on the builder's machine (`cegeka-branding`, `cegeka-apps-style`, `cegeka-icons-use`, `cegeka-icons-illustrative-create`, `cegeka-illustrations-create`, `cegeka-illustrated-diagrams-create`, `cegeka-infographics-create`). See section 10.4 of the blueprint.
