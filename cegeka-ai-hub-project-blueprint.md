@@ -19,8 +19,8 @@ The AI Hub should make AI approachable and useful in everyday work. It should he
 | Content management | **Git only.** All content is Markdown in the repository and changes through pull requests. There is no admin UI, now or later |
 | Architecture | **Static site.** Angular builds the Markdown into a static website. No backend API and no database |
 | Feedback | Employees contact an **AI Champion** (for example via Teams). The app does not store feedback |
-| Hosting | Azure Static Web Apps on existing Cegeka Azure infrastructure, subject to approval |
-| Authentication | Microsoft Entra ID / company account, enforced by the hosting platform |
+| Hosting | **Experiment:** public GitHub Pages demo with sample content (section 6.4). **After adoption:** Cegeka decides hosting and access restrictions; Azure Static Web Apps is the recommended option |
+| Authentication | **Experiment:** none (public demo). **After adoption:** Microsoft Entra ID / company account, enforced by the hosting platform |
 | Initial content owners | AI Coach team |
 | Initial language | English; design for future multilingual support |
 | Branding | Cegeka branding with a dedicated AI Hub identity |
@@ -280,7 +280,7 @@ The Prompt Library should contain examples for technical and non-technical roles
 
 ## 6. Recommended architecture
 
-A static Angular website, generated from Markdown at build time and served behind Entra ID login.
+A static Angular website, generated from Markdown at build time. The experiment runs as a public GitHub Pages demo (6.4); after adoption it is served behind Entra ID login on Cegeka-approved hosting (diagram below).
 
 ```mermaid
 flowchart LR
@@ -296,7 +296,7 @@ flowchart LR
 - **Content pipeline:** Node.js build script that reads `content/`, validates front matter against a schema, converts Markdown to sanitized HTML, and writes JSON files plus a search index into the Angular build.
 - **Rendering:** Either a single-page app that loads the generated JSON, or Angular build-time prerendering (`outputMode: 'static'`) of all content routes for faster first load. Start with whichever is simpler; prerendering can be added later.
 - **Search:** Client-side search index generated at build time.
-- **Hosting:** Azure Static Web Apps (Standard plan, needed to restrict login to the Cegeka tenant; verify current plan features). Alternative: Azure App Service with built-in authentication (Easy Auth) serving the static files.
+- **Hosting:** Experiment on GitHub Pages (6.4). After adoption: Azure Static Web Apps (Free plan with invited users for a small pilot; Standard plan to restrict login to the Cegeka tenant for all employees). Alternative: Azure App Service with built-in authentication (Easy Auth) serving the static files.
 - **Authentication:** Static Web Apps built-in authentication with a custom Microsoft Entra ID provider registered in the Cegeka tenant.
 - **Monitoring (optional):** Application Insights browser SDK for errors and, if approved, page views.
 - **Infrastructure as code:** Bicep or Terraform, depending on the Cegeka standard.
@@ -342,9 +342,36 @@ All Azure services and deployment patterns are recommendations pending architect
 └── .github/ or pipelines/    # CI/CD
 ```
 
+### 6.4 Experiment hosting: public GitHub Pages demo
+
+For the experiment, the site is deployed to GitHub Pages so it can be shown quickly and for free. Hosting and access control for real use are decided once Cegeka adopts the AI Hub (section 7 describes the recommended setup).
+
+**GitHub Pages is public.** Anyone on the internet can open the site and download every file, including the generated content JSON. Login added inside Angular would not protect the content, so the demo has no login.
+
+Guardrails for the public demo:
+
+- Only sample or public-safe content: no internal policies, internal links, real tool approval statuses, client names, champion names or contact details, or anything confidential.
+- Show a visible banner: "Prototype — not an official Cegeka service. Sample content only."
+- Do not use official Cegeka logos or brand assets unless the brand/communications team allows it; use a neutral theme or placeholder identity.
+- Add `<meta name="robots" content="noindex">` and a `robots.txt` that disallows indexing, to reduce discovery (this is not access control).
+- Treat AI Champions and tool availability as placeholder data in the demo.
+
+Technical notes:
+
+- Deploy with a GitHub Actions workflow (`actions/upload-pages-artifact` + `actions/deploy-pages`) on every push to the main branch; the CI content checks run first.
+- Build with the repository sub-path as base, for example `ng build --base-href /inovation-hub/`, and load data with relative URLs.
+- GitHub Pages has no SPA fallback: either prerender all routes (`outputMode: 'static'`), or copy `index.html` to `404.html` in the build output.
+- Custom security headers are not supported; set a Content Security Policy with a `<meta http-equiv="Content-Security-Policy">` tag instead.
+- There are no pull-request preview environments; review changes locally (`npm start`).
+- Keep everything hosting-specific (base href, `staticwebapp.config.json`, Pages workflow) in configuration, so moving to Azure Static Web Apps later is a deployment change, not an app change.
+
+**Moving to production hosting later:** choose hosting and restrictions with Cegeka, replace sample content with real content (in a private or internal repository if content becomes internal), add Entra login at the hosting level (section 7), and remove the demo banner.
+
 ---
 
-## 7. Authentication and access
+## 7. Authentication and access (after adoption)
+
+The public GitHub Pages demo has no authentication (section 6.4). The setup below applies once the AI Hub moves to Cegeka-approved hosting.
 
 - Every route and file requires an authenticated Cegeka account; this is configured in `staticwebapp.config.json`, not in Angular.
 - Use a single-tenant Entra app registration for the Cegeka tenant. Decide whether guest accounts are allowed.
@@ -353,6 +380,8 @@ All Azure services and deployment patterns are recommendations pending architect
 - Angular can call `/.auth/me` to show the user's name; it does not need MSAL.
 - There are no application roles: all signed-in employees see the same published content. Contributor rights are managed in the Git repository, not in the app.
 - Store the app registration secret in the hosting platform's settings (or Key Vault reference). Track its expiry; prefer a certificate or federated credential where supported.
+- **Free vs Standard plan:** the Static Web Apps Free plan only supports the preconfigured Entra provider, which accepts accounts from any tenant. On Free, restrict access by inviting users with a custom role (for example `pilot`, maximum 25 users) and requiring that role on `/*`. Restricting to the Cegeka tenant for all employees requires the Standard plan.
+- **Deploy to the Cegeka tenant only.** Builders may also be signed in to client tenants. Before creating resources: `az login --tenant <cegeka-tenant-id>`, verify with `az account show`, check the directory in the Azure portal, and pin the tenant and subscription IDs in the infrastructure code.
 
 Example (placeholders; confirm against current Static Web Apps documentation):
 
@@ -639,16 +668,17 @@ The estimate assumes one developer and reasonably timely access to approved infr
 
 ### Suggested milestones
 
-**Milestone 0 — Experiment (walking skeleton)**
+**Milestone 0 — Experiment (public demo on GitHub Pages)**
 - Repository structure and CI/CD.
-- Static Web Apps with Entra login restricted to the Cegeka tenant.
+- GitHub Pages deployment with the demo guardrails (section 6.4).
 - Content build for prompts and tools only.
 - Home page, prompts list/detail with copy action, tools list/detail.
-- A handful of real content items.
-- Shown to a few colleagues and AI Champions.
-- Decision point: continue to the MVP, adjust, or stop.
+- A handful of public-safe sample content items.
+- Shown to colleagues, the AI Coach team, and potential sponsors.
+- Decision point: does Cegeka want to adopt it? If yes, agree hosting, access restrictions, and content ownership, then continue to the MVP.
 
 **Milestone 1 — Content site**
+- Hosting and Entra login on Cegeka-approved infrastructure (section 7).
 - All content types, related content, and redirects.
 - Search and filters.
 - AI Champions page and contact links.
@@ -689,6 +719,8 @@ The MVP is ready for pilot when:
 
 | Risk | Mitigation |
 |---|---|
+| Public demo exposes internal information or looks like an official Cegeka service | Sample/public-safe content only, prototype banner, no official logos without permission, `noindex` |
+| Deploying Azure resources in a client tenant instead of the Cegeka tenant | Explicit tenant login and checks (section 7); pinned tenant and subscription IDs |
 | Single builder (bus factor of one) | Keep documentation, ADRs, and setup scripts current; keep the stack mainstream |
 | Content goes stale after launch | Owners, review dates, and automated review reminders |
 | Contributors find Git difficult | Web editor, templates per content type, short contribution guide, AI Coach team helps |
@@ -700,16 +732,17 @@ The MVP is ready for pilot when:
 
 ### Open questions
 
-1. Is Azure Static Web Apps (Standard) approved, or should App Service with Easy Auth be used?
-2. GitHub or Azure DevOps for the repository and pipelines?
-3. Are guest/external accounts allowed?
-4. Is there a Cegeka design system or Angular component library to use?
-5. Which data-classification scheme should tool pages reference?
-6. Who confirms tool availability status, and where is that recorded?
-7. Who are the AI Champions, and have they agreed to be listed?
-8. Is optional page analytics allowed, and under which conditions?
-9. Which languages come after English, and when?
-10. Who owns support and maintenance after the experiment?
+1. After adoption: which hosting and access restrictions (Azure Static Web Apps Free with invitations, Standard, App Service with Easy Auth, or other), and which Azure subscription in the Cegeka tenant?
+2. After adoption: should the repository move to a Cegeka GitHub organisation or Azure DevOps, and become private/internal?
+3. May the public demo use Cegeka branding?
+4. Are guest/external accounts allowed?
+5. Is there a Cegeka design system or Angular component library to use?
+6. Which data-classification scheme should tool pages reference?
+7. Who confirms tool availability status, and where is that recorded?
+8. Who are the AI Champions, and have they agreed to be listed?
+9. Is optional page analytics allowed, and under which conditions?
+10. Which languages come after English, and when?
+11. Who owns support and maintenance after the experiment?
 
 Record decisions as short Architecture Decision Records (ADRs) in `docs/adr/`.
 
@@ -727,12 +760,13 @@ When using this document as context in an IDE-based AI assistant, follow these i
 6. Do not add a backend, database, admin UI, or in-app feedback storage unless the scope is explicitly changed.
 7. Keep the content build and Angular types aligned; share the types.
 8. Never let `Draft` or `Archived` content reach the build output.
-9. Add tests alongside features, especially for content validation and sanitization.
-10. Do not invent Entra tenant IDs, client IDs, secrets, URLs, subscription details, or company-specific configuration. Use clearly named placeholders and document what an administrator must provide.
-11. Do not claim that a tool, provider, or AI service is company-approved unless that status is explicitly confirmed.
-12. Keep the MVP free of LLM integrations unless the scope is explicitly changed.
-13. Maintain a concise implementation plan and update it as milestones are completed.
-14. Ask focused questions only when a decision blocks safe or correct implementation. Otherwise, make conservative, clearly documented assumptions.
+9. While the site is a public GitHub Pages demo, never add internal or confidential content, and do not add client-side login as a substitute for hosting-level access control.
+10. Add tests alongside features, especially for content validation and sanitization.
+11. Do not invent Entra tenant IDs, client IDs, secrets, URLs, subscription details, or company-specific configuration. Use clearly named placeholders and document what an administrator must provide.
+12. Do not claim that a tool, provider, or AI service is company-approved unless that status is explicitly confirmed.
+13. Keep the MVP free of LLM integrations unless the scope is explicitly changed.
+14. Maintain a concise implementation plan and update it as milestones are completed.
+15. Ask focused questions only when a decision blocks safe or correct implementation. Otherwise, make conservative, clearly documented assumptions.
 
 ### Recommended first task for the IDE assistant
 

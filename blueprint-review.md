@@ -11,7 +11,7 @@ Review of `cegeka-ai-hub-project-blueprint.md`. The changes below have been appl
 | Content management | **Git only.** Markdown with front matter, pull requests, CI validation. No admin UI, now or later. |
 | Architecture | **Static Angular site, no backend API, no database.** Content is built into JSON and a search index at build time (section 1.1). |
 | Feedback | **Contact an AI Champion.** The app stores no feedback or personal data. |
-| Hosting/auth | Azure Static Web Apps with Entra ID login enforced by the platform for every file. |
+| Hosting/auth | **Experiment:** public GitHub Pages demo with sample content and guardrails (section 6.4). **After adoption:** Cegeka decides; Azure Static Web Apps with Entra login is recommended (Free plan + invitations for up to 25 pilot users, Standard for tenant-wide restriction). |
 
 ## What was removed
 
