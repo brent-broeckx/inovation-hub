@@ -14,48 +14,62 @@ The AI Hub should make AI approachable and useful in everyday work. It should he
 | Area | Decision |
 |---|---|
 | Audience | All Cegeka employees |
-| Product approach | Start with a focused MVP and expand incrementally |
+| Product approach | Start as an experiment, then grow incrementally if the pilot shows value |
 | Product ambition | Polished, production-quality internal web application |
-| Hosting | Existing Cegeka Azure infrastructure, subject to approval |
-| Authentication | Microsoft Entra ID / company account |
+| Content management | **Git only.** All content is Markdown in the repository and changes through pull requests. There is no admin UI, now or later |
+| Architecture | **Static site.** Angular builds the Markdown into a static website. No backend API and no database |
+| Feedback | Employees contact an **AI Champion** (for example via Teams). The app does not store feedback |
+| Hosting | Azure Static Web Apps on existing Cegeka Azure infrastructure, subject to approval |
+| Authentication | Microsoft Entra ID / company account, enforced by the hosting platform |
 | Initial content owners | AI Coach team |
 | Initial language | English; design for future multilingual support |
 | Branding | Cegeka branding with a dedicated AI Hub identity |
 | Builder's role | Combination of educator, builder, and connector |
-| Delivery approach | Start as an experiment (Phase 0), then grow into the MVP if the pilot shows value |
-| Content management at start | Content-as-code: Markdown files with front matter in the repository, imported into the database. The admin UI follows in a later phase |
-| Technology direction | Angular frontend and ASP.NET Core API (see 1.1) |
 
 Infrastructure choices and technology standards must be confirmed against Cegeka's approved architecture and platform guidelines before implementation.
 
-### 1.1 Frontend framework decision
+### 1.1 Why a static site without backend or database
+
+All content changes through Git, and the app does not store user data. A backend and database would therefore only copy what is already in the repository.
+
+| Concern | How a static site handles it |
+|---|---|
+| Content editing, review, versioning, audit | Pull requests, code review, and Git history |
+| Draft vs published | Front-matter `status`; the build only includes `Published` content |
+| Search | Search index generated at build time, searched in the browser |
+| Access control | Entra ID login enforced by the hosting platform for every file |
+| Feedback | Handled by people (AI Champions), not stored in the app |
+| Cost and maintenance | No server, database, migrations, or API to patch and monitor |
+
+**When to add a backend later:** only when a feature needs to write or compute data on the server, for example favourites, in-app feedback, or AI-powered features (semantic search, prompt assistant). Azure Static Web Apps can link a backend (Azure Functions or an ASP.NET Core App Service) without changing the frontend architecture.
+
+### 1.2 Frontend framework decision
 
 Angular is retained. React was considered.
 
 | Factor | Angular | React |
 |---|---|---|
 | Builder/maintainer skills | Strongest skill of the builder and maintainer | Would need ramp-up |
-| Built-in capabilities | Router, forms, HTTP, DI, i18n included | Requires choosing libraries (router, forms, data fetching, i18n) |
-| Fit with ASP.NET Core enterprise stack | Common pairing; opinionated structure | Also common; more freedom, more decisions |
-| Entra integration | MSAL Angular | MSAL React |
+| Built-in capabilities | Router, HTTP, DI, i18n, prerendering included | Requires choosing libraries (router, data fetching, i18n) or a meta-framework |
+| Static content sites | Supported through build-time prerendering | Strong ecosystem (for example Next.js, Astro) |
 
-**Rationale:** For a solo builder who is strongest in Angular, switching frameworks adds risk without a clear benefit for a content-driven app. Revisit only if the Cegeka design system is available exclusively as React components or a React-based team takes over maintenance.
+**Rationale:** For a solo builder who is strongest in Angular, switching frameworks adds risk without a clear benefit. Revisit only if the Cegeka design system is available exclusively as React components or a React-based team takes over maintenance.
 
-### 1.2 Goals and success metrics
+### 1.3 Goals and success metrics
 
-Define measurable goals before the pilot so that the experiment can be evaluated objectively.
+Define measurable goals before the pilot so that the experiment can be evaluated objectively. Because the app does not store user data, measurement relies on surveys, AI Champion input, and (optionally) approved, privacy-friendly page analytics.
 
 | Goal | Example metric | Example pilot target |
 |---|---|---|
-| Employees find useful AI content | % of feedback marked helpful | ≥ 70% helpful |
-| Employees return | Pilot users who return within 2 weeks | ≥ 50% |
-| Content stays current | Items past review date | 0 at pilot end |
-| Discoverability | Searches that return at least one result | ≥ 80% |
 | Qualitative value | Pilot survey: "The AI Hub helps me in my work" | Average ≥ 4/5 |
+| Employees find what they need | Pilot survey: "I found what I was looking for" | ≥ 70% agree |
+| Content stays current | Items past review date | 0 at pilot end |
+| Content grows | New or updated items per month | Agreed with AI Coach team |
+| Usage (optional, if analytics approved) | Unique visitors and returning visitors | Agreed with AI Coach team |
 
-Targets are placeholders to be agreed with the AI Coach team. Collect only the data needed to measure them (see section 12).
+Targets are placeholders to be agreed with the AI Coach team.
 
-### 1.3 Target users
+### 1.4 Target users
 
 | Persona | Need |
 |---|---|
@@ -63,7 +77,8 @@ Targets are placeholders to be agreed with the AI Coach team. Collect only the d
 | Practitioner (business or technical) | Find prompts and use cases for their role, quickly |
 | Developer / technical specialist | Find developer tools, advanced prompts, and workflows |
 | Manager / team lead | Identify opportunities and approved tools for their team |
-| AI Coach / content admin | Publish and maintain content with little effort |
+| AI Coach / content contributor | Add and update content through Git with little effort |
+| AI Champion | Be findable, answer questions, and pass on feedback |
 
 ---
 
@@ -72,10 +87,11 @@ Targets are placeholders to be agreed with the AI Coach team. Collect only the d
 1. **Practical first:** Focus on concrete tasks and outcomes rather than AI theory alone.
 2. **Accessible to everyone:** Provide useful entry points for beginners and experienced technical users.
 3. **Responsible by design:** Make approved usage, data handling, and security guidance easy to find.
-4. **Content-driven:** Make it straightforward for the AI Coach team to keep information current.
+4. **Content-driven:** Make it straightforward for the AI Coach team to keep information current through Git.
 5. **Incremental:** Deliver a useful MVP before adding advanced AI features.
-6. **Measurable:** Gather proportionate feedback and learn which content is useful.
-7. **Extensible:** Keep the architecture ready for more languages, content types, and capabilities.
+6. **Measurable:** Learn which content is useful through proportionate, privacy-friendly means.
+7. **Simple:** Do not add servers, databases, or services until a feature needs them.
+8. **Extensible:** Keep the structure ready for more languages, content types, and capabilities.
 
 ## 3. Core pillars
 
@@ -89,19 +105,19 @@ Offer short guides, tutorials, learning paths, and responsible-use guidance.
 Provide reusable prompts, examples, and workflows employees can adapt.
 
 ### Share
-Create a place for ideas, success stories, feedback, and community knowledge. Some community features can follow after the MVP.
+Connect employees with AI Champions, and collect ideas, success stories, and feedback through them. More community features can follow after the MVP.
 
 ---
 
 ## 4. MVP scope
 
-The MVP should provide a useful, searchable content platform with an employee-facing experience. Content is initially managed as code (4.2); the full administration UI follows in a later phase (4.3).
+The MVP is a searchable, static content website for employees. Content is managed in Git (section 4.2).
 
 ### 4.1 Employee-facing features
 
 #### Home dashboard
 - Clear introduction to the AI Hub.
-- Featured content selected by administrators.
+- Featured content (front-matter flag).
 - Recently published or updated content.
 - Shortcuts to tools, prompts, use cases, and guides.
 - Search entry point.
@@ -121,11 +137,8 @@ The MVP should provide a useful, searchable content platform with an employee-fa
 - Prompt detail page with purpose, instructions, example input/output where available.
 - Show which tool(s) the prompt is intended for.
 - Mark placeholders the user must fill in (for example `{{code}}`, `{{audience}}`) so they are easy to spot.
-- Copy prompt action.
+- Copy prompt action (handled in the browser).
 - Include both technical and non-technical prompts.
-
-#### Related content
-- Detail pages link to related items (for example a use case links to its tools, prompts, and guides).
 
 #### Use Cases catalogue
 - Practical examples of how AI can help with work.
@@ -137,7 +150,6 @@ The MVP should provide a useful, searchable content platform with an employee-fa
 - Short, actionable guides.
 - Beginner-to-advanced difficulty.
 - Estimated reading or completion time.
-- Markdown-based content.
 
 #### AI Guidelines
 - Responsible AI guidance.
@@ -147,31 +159,35 @@ The MVP should provide a useful, searchable content platform with an employee-fa
 - Guideline list and guideline detail pages.
 - Clearly state that the official policy prevails if it differs from AI Hub content.
 
+#### Related content
+- Detail pages link to related items (for example a use case links to its tools, prompts, and guides).
+
 #### Search
 - Search across published tools, prompts, use cases, guides, and guidelines.
-- Filter by content type, category, and language.
-- Search results must never expose drafts or archived content to ordinary employees.
-- MVP implementation: database full-text search (SQL Server full-text or PostgreSQL `tsvector`), behind an `ISearchService` abstraction so that Azure AI Search or semantic search can be added later without changing the API.
+- Filter by content type, category, difficulty, and language.
+- Implemented in the browser with a search index generated at build time (for example MiniSearch, Lunr, or Fuse.js). Suitable for hundreds of items.
+- The index contains published content only.
 
-#### Feedback
-- Allow employees to mark content as helpful or not helpful.
-- Optionally allow a short comment or report that content is outdated.
-- Keep collection proportionate and transparent.
-- Tell users that comments are visible to content admins and must not contain confidential data.
+#### AI Champions and feedback
+- AI Champions page: name, department/region, topics they can help with, and a "Message on Teams" link.
+- Every content page has a "Questions or feedback? Contact an AI Champion" link, plus a "Report outdated content" link that contacts the content owner or an AI Champion.
+- AI Champions pass feedback to the AI Coach team, who update content through Git.
+- The app does not store feedback or comments.
 
-#### Help and contact
-- Footer or page explaining who runs the AI Hub, how to suggest content, and where to ask questions (for example a Teams channel).
+#### About and help
+- Who runs the AI Hub, how to suggest content, and where to ask questions (for example a Teams channel).
 
-### 4.2 Content management in the MVP (content-as-code)
+### 4.2 Content management (Git only)
 
-The admin UI is not needed to start. Initially:
-
-- Content lives as Markdown files with YAML front matter in a `content/` folder in the repository (one file per content item and language).
-- Front matter holds metadata: type, slug, status, categories, tags, owner, review date, featured flag, type-specific fields.
-- A content import step (CLI command or startup job in non-production environments, pipeline step in production) validates the files and upserts them into the database.
-- Validation runs in CI: required fields, unique slugs, valid categories, English translation present, safe Markdown.
-- Changes are reviewed through pull requests, which gives versioning, review, and an audit trail for free.
-- The database model stays the same as the later admin-UI model (section 8), so the switch to UI-based editing does not require a data migration.
+- Content lives as Markdown files with YAML front matter in a `content/` folder in the repository.
+- One file per content item and language (for example `content/prompts/generate-unit-tests.en.md`).
+- Front matter holds metadata: type, slug, status, categories, tags, owner, review date, featured flag, and type-specific fields (section 8).
+- Reference data (categories, AI Champions) lives in YAML files, for example `content/_data/categories.yml` and `content/_data/champions.yml`.
+- Images live next to the content or in `content/_media/`, with size and format limits checked in CI.
+- Every change goes through a pull request. The AI Coach team reviews and approves (enforced with branch protection and `CODEOWNERS`).
+- CI validates content on every pull request (section 11). Merging to the main branch publishes automatically.
+- Git history is the audit trail.
+- Contributors without Git experience can edit Markdown in the repository's web editor, which creates the pull request for them.
 
 Example:
 
@@ -180,7 +196,6 @@ Example:
 type: Prompt
 slug: generate-unit-tests
 status: Published
-language: en
 categories: [development]
 tags: [testing, csharp]
 owner: ai-coach-team
@@ -194,29 +209,13 @@ intendedTools: [github-copilot]
 Write unit tests for the following code: {{code}}
 ```
 
-### 4.3 Administration features (phase 2, after the pilot)
+### 4.3 Explicitly out of scope
 
-- Admin dashboard with content overview.
-- Create and edit content.
-- Save drafts.
-- Preview content before publishing.
-- Publish and unpublish content.
-- Archive content instead of physically deleting it.
-- Restore archived content.
-- Upload and manage images used in content.
-- Manage categories and tags.
-- Assign a content owner and review date.
-- Review and moderate feedback.
-- View basic content audit history.
-- Identify content that is due for review.
-- Optional later: e-mail or Teams reminders to owners when content is due for review.
+Do not build these before the core content site is working:
 
-Until this phase is delivered, sections 4.2 (content-as-code) and the pull-request process cover these needs.
-
-### 4.4 Explicitly out of scope for the MVP
-
-Do not build these before the core content platform is working:
-
+- Backend API or database.
+- Administration UI (content is managed in Git only).
+- In-app feedback, comments, or ratings.
 - AI chatbot or conversational assistant.
 - AI-powered recommendations.
 - Agent marketplace.
@@ -225,30 +224,28 @@ Do not build these before the core content platform is working:
 - Automated translation.
 - LLM integration or prompt execution against company data.
 - Advanced analytics or adoption scoring.
-- Administration UI (moved to phase 2, see 4.3).
 
-### 4.5 Potential later features
+### 4.4 Potential later features
 
-- Events, workshops, and office hours.
-- AI news and announcements.
-- AI Champions directory and community features.
-- Employee idea submission.
-- Success stories and show-and-tell posts.
-- Favorites and saved content.
-- AI-powered semantic search.
-- AI Opportunity Finder to help identify automation opportunities.
-- Prompt improvement assistant.
-- Workflow generator.
+Features marked * need a backend (see 1.1).
+
+- Events, workshops, and office hours (can be static content).
+- AI news and announcements (can be static content).
+- Success stories and show-and-tell posts (can be static content).
+- Employee idea submission (for example a Microsoft Form link, or * in-app).
+- Favorites and saved content (* or browser local storage only).
+- AI-powered semantic search *.
+- AI Opportunity Finder to help identify automation opportunities *.
+- Prompt improvement assistant *.
+- Workflow generator *.
 - Adoption and value dashboard.
-- Microsoft Teams tab or app that embeds the AI Hub.
+- Microsoft Teams tab that embeds the AI Hub.
 
 ---
 
 ## 5. Suggested initial content
 
-Populate the platform before launch so that it feels useful immediately.
-
-Suggested starting volume:
+Populate the site before launch so that it feels useful immediately.
 
 | Content type | Initial target |
 |---|---:|
@@ -257,6 +254,7 @@ Suggested starting volume:
 | Use cases | 10 |
 | Guides | 5–8 |
 | Guidelines | 3–5 |
+| AI Champions | All current champions who agree to be listed |
 
 Possible first guides:
 
@@ -271,333 +269,189 @@ The Prompt Library should contain examples for technical and non-technical roles
 
 ### Content governance
 
-- The AI Coach team owns content quality and decides what is published.
-- Tool availability status (`CompanyApproved`, `Restricted`, …) may only be set based on a confirmed decision from the responsible team (for example IT, security, or procurement), with the source recorded.
-- Use a short editorial style guide: tone, length, structure of guides and prompts, and how to mark indicative claims (such as time savings).
+- The AI Coach team owns content quality and approves pull requests.
+- Tool availability status (`CompanyApproved`, `Restricted`, …) may only be set based on a confirmed decision from the responsible team (for example IT, security, or procurement), with the source recorded in front matter.
+- Use a short editorial style guide (`content/STYLE-GUIDE.md`): tone, length, structure of guides and prompts, and how to mark indicative claims (such as time savings).
 - Each content item has a named owner; when an owner leaves, ownership moves to the AI Coach team.
+- AI Champions are listed only with their consent and can ask to be removed at any time.
+- Content is visible to every signed-in employee. Do not put confidential, client, or personal information in content.
 
 ---
 
 ## 6. Recommended architecture
 
-Use a **modular monolith** for the MVP. Avoid microservices until there is a clear operational or scaling reason.
+A static Angular website, generated from Markdown at build time and served behind Entra ID login.
 
-### 6.1 High-level components
+```mermaid
+flowchart LR
+    A[Contributor] -->|Pull request| B[Git repository<br/>content/ + Angular app]
+    B -->|CI: validate + build| C[Static output<br/>HTML, JS, JSON, search index]
+    C -->|Deploy| D[Azure Static Web Apps]
+    E[Employee] -->|Entra ID login| D
+```
 
-- **Frontend:** Angular single-page application.
-- **Backend:** ASP.NET Core REST API.
-- **Database:** Azure SQL or PostgreSQL, depending on Cegeka's approved standard.
-- **ORM:** Entity Framework Core.
-- **Authentication:** Microsoft Entra ID.
-- **Frontend authentication:** MSAL Angular.
-- **API authentication:** Microsoft.Identity.Web.
-- **Hosting:** Approved Azure hosting. Two options:
-  - *Simplest:* one Azure App Service hosting both the API and the built Angular files (same origin, no CORS).
-  - *Split:* Azure Static Web Apps for the frontend and Azure App Service for the API.
-- **File storage:** Azure Blob Storage for images and attachments (only needed once image upload exists; content-as-code images can live in the repository).
-- **Search:** Database full-text search for the MVP; Azure AI Search as a later option.
-- **API contract:** OpenAPI document generated by the API; TypeScript client/models generated from it for Angular.
-- **Secrets:** Azure Key Vault, using managed identity to access Azure resources.
-- **Monitoring:** Application Insights or the approved company monitoring solution, for both API and frontend errors.
+### 6.1 Components
+
+- **Frontend:** Angular application.
+- **Content pipeline:** Node.js build script that reads `content/`, validates front matter against a schema, converts Markdown to sanitized HTML, and writes JSON files plus a search index into the Angular build.
+- **Rendering:** Either a single-page app that loads the generated JSON, or Angular build-time prerendering (`outputMode: 'static'`) of all content routes for faster first load. Start with whichever is simpler; prerendering can be added later.
+- **Search:** Client-side search index generated at build time.
+- **Hosting:** Azure Static Web Apps (Standard plan, needed to restrict login to the Cegeka tenant; verify current plan features). Alternative: Azure App Service with built-in authentication (Easy Auth) serving the static files.
+- **Authentication:** Static Web Apps built-in authentication with a custom Microsoft Entra ID provider registered in the Cegeka tenant.
+- **Monitoring (optional):** Application Insights browser SDK for errors and, if approved, page views.
 - **Infrastructure as code:** Bicep or Terraform, depending on the Cegeka standard.
-- **Environments:** Local and at least one shared test environment for the experiment; add acceptance/production before the wider pilot.
-- **CI/CD:** Existing Cegeka pipeline and deployment standards.
+- **Environments:** Production plus pull-request preview environments (Static Web Apps creates these per pull request where supported).
+- **CI/CD:** Existing Cegeka pipeline standards (GitHub Actions or Azure DevOps Pipelines).
+
+All Azure services and deployment patterns are recommendations pending architecture and security approval. Get a rough monthly cost estimate before provisioning.
 
 ### 6.2 Architectural principles
 
-- API-first separation between frontend and backend.
-- Content-driven design: content should be managed through data, not hardcoded into Angular components.
-- Enforce authorization on the API; frontend route guards are not a security boundary.
-- Use DTOs rather than exposing EF Core entities.
-- Keep business logic in application/service layers.
-- Keep database access behind repositories or focused data-access services where useful; do not add abstraction without a reason.
-- Use migrations for database changes.
-- No LLM integration is required for the MVP.
-- Design the content model for multiple languages from the start.
-- Design UI text for translation from the start (Angular i18n or a runtime translation library), not only content.
-- Cache published content responses (for example output caching with invalidation on import/publish); the app is read-heavy.
+- Content is data in `content/`, never hardcoded into Angular components.
+- The build is the gatekeeper: invalid content fails CI and is never deployed.
+- Only `Published` content is included in the build output. Every file in the output can be downloaded by any signed-in employee, so drafts and archived items must never be in it.
+- Access control is enforced by the hosting platform for every request, including JSON and asset files. Angular code does not decide who can see content.
+- Design the content model and UI text for multiple languages from the start.
+- Do not add a backend until a feature needs one (see 1.1).
 
-All Azure services and deployment patterns are recommendations pending architecture and security approval. Get a rough monthly cost estimate for the chosen services before provisioning.
-
-### 6.3 Suggested backend layers
-
-A practical solution structure could be:
+### 6.3 Repository structure
 
 ```text
-src/
-├── Cegeka.AiHub.Api/
-│   ├── Controllers/
-│   ├── Authorization/
-│   ├── Middleware/
-│   └── Program.cs
-├── Cegeka.AiHub.Application/
-│   ├── Content/
-│   ├── ContentImport/
-│   ├── Search/
-│   ├── Feedback/
-│   ├── Categories/
-│   └── Common/
-├── Cegeka.AiHub.Domain/
-│   ├── Entities/
-│   ├── Enums/
-│   └── ValueObjects/
-└── Cegeka.AiHub.Infrastructure/
-    ├── Persistence/
-    ├── Authentication/
-    ├── Storage/
-    └── Services/
+/
+├── content/
+│   ├── _data/
+│   │   ├── categories.yml
+│   │   └── champions.yml
+│   ├── _media/
+│   ├── tools/
+│   ├── prompts/
+│   ├── use-cases/
+│   ├── guides/
+│   ├── guidelines/
+│   └── STYLE-GUIDE.md
+├── tools/
+│   └── content-build/        # validate + Markdown → JSON + search index
+│       ├── schema/
+│       └── src/
+├── src/                      # Angular application
+├── public/
+│   └── staticwebapp.config.json
+├── infra/                    # Bicep or Terraform
+├── docs/
+│   └── adr/
+└── .github/ or pipelines/    # CI/CD
 ```
 
-Adjust naming and layering to existing Cegeka conventions if there are established templates. For a small experiment, starting with fewer projects (for example `Api` + `Infrastructure`, or one project with clear folders) is acceptable; split later when it helps.
-
-Suggested test projects: `Cegeka.AiHub.UnitTests` and `Cegeka.AiHub.IntegrationTests` (using `WebApplicationFactory` and a real database via Testcontainers or a test database).
-
 ---
 
-## 7. Authentication and authorization
+## 7. Authentication and access
 
-### Authentication
-- Use Microsoft Entra ID with company accounts.
-- Angular obtains an access token using MSAL Angular.
-- Angular sends the bearer token to the API.
-- API validates token signature, issuer, audience, and expiry using supported Microsoft identity libraries.
-- Restrict sign-in to the Cegeka tenant (single-tenant app registration); decide whether guest/external accounts are allowed.
-- Consider a Backend-for-Frontend (BFF) pattern with secure, HTTP-only cookies instead of tokens in the browser; current OAuth guidance for browser apps prefers it. MSAL Angular with bearer tokens is acceptable for an internal app if approved by security.
-- Provide a `/me` endpoint that returns the user's display name and roles so the UI can show/hide admin features.
+- Every route and file requires an authenticated Cegeka account; this is configured in `staticwebapp.config.json`, not in Angular.
+- Use a single-tenant Entra app registration for the Cegeka tenant. Decide whether guest accounts are allowed.
+- Disable other identity providers (for example GitHub) so that only Entra ID sign-in is possible.
+- Unauthenticated requests redirect to the Entra login.
+- Angular can call `/.auth/me` to show the user's name; it does not need MSAL.
+- There are no application roles: all signed-in employees see the same published content. Contributor rights are managed in the Git repository, not in the app.
+- Store the app registration secret in the hosting platform's settings (or Key Vault reference). Track its expiry; prefer a certificate or federated credential where supported.
 
-### Roles
-
-| Role | Permissions |
-|---|---|
-| Employee | Read published content and submit feedback |
-| ContentAdmin | Create, edit, publish, archive, and manage content |
-
-Use Entra app roles or approved group-based assignment. Confirm the preferred assignment model with the identity/platform team.
-
-### Authorization requirements
-- All employee content endpoints require authentication unless an explicit internal policy permits otherwise.
-- Admin endpoints require the `ContentAdmin` role or an equivalent approved policy.
-- Enforce roles server-side.
-- Never rely only on Angular route guards.
-- Do not expose drafts through employee endpoints.
-
----
-
-## 8. Data model
-
-Use a shared content model with type-specific detail tables. This provides common publishing, translation, categorization, and ownership behavior without putting every possible field into one oversized table.
-
-### 8.1 Main entities
-
-#### ContentItem
-- `Id` — UUID / GUID, primary key.
-- `ContentType` — enum: `Tool`, `Prompt`, `UseCase`, `Guide`, `Guideline`.
-- `Slug` — unique URL-friendly identifier.
-- `Status` — enum: `Draft`, `Published`, `Archived`.
-- `IsFeatured` — boolean.
-- `OwnerObjectId` — Entra user/object ID or approved owner reference.
-- `OwnerDisplayName` — cached display name, so the app does not need Microsoft Graph calls to render owners. A team name (for example "AI Coach team") is allowed.
-- `ReviewAt` — optional review date.
-- `SourcePath` — nullable; the content file path when imported from the repository (content-as-code).
-- `PublishedAt` — nullable UTC timestamp.
-- `CreatedAt` — UTC timestamp.
-- `UpdatedAt` — UTC timestamp.
-- Concurrency token, such as SQL `rowversion` where supported.
-
-#### ContentTranslation
-- `Id`.
-- `ContentItemId` — FK to `ContentItem`.
-- `LanguageCode` — e.g. `en`, `nl`, `fr`.
-- `Title`.
-- `Summary`.
-- `BodyMarkdown`.
-- `PromptText` — nullable, for prompt content.
-- `ExampleInput` — nullable.
-- `ExampleOutput` — nullable.
-- `UpdatedAt` — UTC timestamp, to detect translations that are older than the English source.
-- Unique constraint on `(ContentItemId, LanguageCode)`.
-
-Every published item must have an English translation in the initial release. When a requested language is missing, fall back to English and tell the UI which language was returned.
-
-#### ToolDetail
-- `ContentItemId` — PK and FK to `ContentItem`.
-- `WebsiteUrl`.
-- `Provider`.
-- `AccessType` — e.g. `Web`, `Desktop`, `IDE`, `Integration`.
-- `Availability` — e.g. `CompanyApproved`, `Restricted`, `Experimental`, `External`.
-- `AvailabilityVerifiedAt` — date the status was last confirmed.
-- `AvailabilitySource` — reference to the decision or policy that confirms the status.
-- `AccessInstructions` — how to get access (Markdown, translatable; can live in `ContentTranslation.BodyMarkdown` or a dedicated translated field).
-- `LicenseModel` — e.g. `Included`, `PerUserLicense`, `Free`, `Unknown`.
-- `MaxDataClassification` — highest data classification allowed with this tool, using the company classification scheme.
-
-#### PromptDetail
-- `ContentItemId` — PK and FK.
-- `Difficulty` — `Beginner`, `Intermediate`, `Advanced`.
-- `IntendedRole` — optional.
-
-#### UseCaseDetail
-- `ContentItemId` — PK and FK.
-- `Department`.
-- `Difficulty`.
-- `EstimatedTimeSaved` — optional and clearly indicative unless validated.
-
-#### GuideDetail
-- `ContentItemId` — PK and FK.
-- `Difficulty`.
-- `EstimatedMinutes`.
-
-#### Category
-- `Id`.
-- `Slug`.
-- `IsActive`.
-
-#### CategoryTranslation
-- `Id`.
-- `CategoryId` — FK.
-- `LanguageCode`.
-- `Name`.
-
-#### Tag
-- `Id`.
-- `Name`.
-- `Slug`.
-
-Tags are kept language-neutral (short technical keywords) in the MVP. If tags must be shown in multiple languages, add a `TagTranslation` table like `CategoryTranslation`.
-
-#### ContentFeedback
-- `Id`.
-- `ContentItemId` — FK.
-- `UserObjectId`.
-- `FeedbackType` — e.g. `Helpful`, `NotHelpful`, `Outdated`, `Comment`.
-- `Comment` — nullable, with a maximum length.
-- `Status` — e.g. `New`, `Reviewed`, `Resolved`, `Hidden` (needed for moderation).
-- `CreatedAt` — UTC timestamp.
-- One helpful/not-helpful vote per user per content item (unique constraint or upsert); comments can be multiple.
-- Define a retention period, after which `UserObjectId` is removed or the feedback is deleted.
-
-### 8.2 Junction and supporting tables
-
-- `ContentCategory`: many-to-many link between content and categories.
-- `ContentTag`: many-to-many link between content and tags.
-- `ContentRelation`: links between content items (`SourceId`, `TargetId`, `RelationType` such as `UsesTool`, `RelatedGuide`, `RelatedPrompt`). Used for related content and for "intended tools" of prompts.
-- `SlugRedirect`: old slug → content item, so shared links keep working after a slug changes.
-- Optional `ContentInteraction`: only if basic events such as content views or prompt copies are genuinely needed. Avoid collecting excessive usage data.
-- `ContentAudit`: record important administrative changes, such as publish, unpublish, archive, and content edits.
-
-### 8.3 Data storage guidance
-
-- Store images and attachments in Blob Storage.
-- Store file metadata and blob references in the database.
-- Do not store arbitrary complete content objects as unvalidated JSON blobs.
-- Use foreign keys and unique constraints.
-- Use UTC timestamps.
-- Add indexes for common filters such as status, content type, slug, and review date.
-- Handle concurrent admin edits using optimistic concurrency.
-- Sanitize Markdown output and do not allow unsafe arbitrary HTML or scripts. For example: render Markdown on the server with Markdig with raw HTML disabled, or render in Angular and sanitize (Angular's built-in sanitizer or DOMPurify). Pick one place and test it.
-
----
-
-## 9. API design
-
-Base route: `/api/v1`
-
-Use REST conventions, DTOs, validation, pagination, and consistent error responses. Use Problem Details (RFC 9457) for API errors where appropriate.
-
-### 9.1 Employee endpoints
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/home?language=en` | Aggregated homepage content |
-| GET | `/tools` | List and filter tools |
-| GET | `/tools/{slug}` | Tool detail |
-| GET | `/prompts` | List and filter prompts |
-| GET | `/prompts/{slug}` | Prompt detail |
-| POST | `/prompts/{id}/copy` | Optional copy interaction tracking |
-| GET | `/use-cases` | List and filter use cases |
-| GET | `/use-cases/{slug}` | Use-case detail |
-| GET | `/guides` | List guides |
-| GET | `/guides/{slug}` | Guide detail |
-| GET | `/guidelines` | List guidelines |
-| GET | `/guidelines/{slug}` | Guideline detail |
-| GET | `/search?q=...&type=...&language=en` | Search published content |
-| GET | `/categories` | List active categories |
-| GET | `/tags` | List tags in use |
-| GET | `/me` | Current user's display name and roles |
-| POST | `/feedback` | Submit feedback (rate limited) |
-
-Only implement the prompt-copy endpoint if copy tracking is required. Copying a prompt can also be handled entirely in the frontend.
-
-Detail endpoints that receive an old slug return a redirect (or the canonical slug) using `SlugRedirect`.
-
-### 9.2 Admin endpoints (phase 2)
-
-All endpoints below require the `ContentAdmin` authorization policy. During the content-as-code phase, only the import mechanism is needed; these endpoints are built together with the admin UI.
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/admin/content` | List and filter all content |
-| GET | `/admin/content/{id}` | Get content for editing |
-| POST | `/admin/content` | Create content |
-| PUT | `/admin/content/{id}` | Update content |
-| DELETE | `/admin/content/{id}` | Archive content; do not physically delete |
-| POST | `/admin/content/{id}/publish` | Publish content |
-| POST | `/admin/content/{id}/unpublish` | Return content to draft/unpublished state |
-| POST | `/admin/content/{id}/restore` | Restore archived content to `Draft` |
-| GET | `/admin/content/{id}/preview?language=en` | Render content as employees would see it |
-| GET | `/admin/content/{id}/audit` | Audit history for one item |
-| GET | `/admin/content/review-due` | Items past or near their review date |
-| POST | `/admin/media` | Upload an image (validated type and size) |
-| GET | `/admin/feedback` | List feedback |
-| PUT | `/admin/feedback/{id}` | Moderate or update feedback status |
-| GET | `/admin/categories` | List categories |
-| POST | `/admin/categories` | Create category |
-| PUT | `/admin/categories/{id}` | Update category |
-| GET | `/admin/tags` | List tags |
-| POST | `/admin/tags` | Create tag |
-| PUT | `/admin/tags/{id}` | Update or merge tag |
-
-Unpublishing moves the item back to `Draft`. Archiving is only possible from `Draft` or `Published`; restoring moves an archived item to `Draft`.
-
-### 9.3 API conventions
-
-- Pagination: `page`, `pageSize`.
-- Sorting: allowlisted sort fields only.
-- Filtering: explicit query parameters.
-- Language: `language` query parameter initially; optionally support `Accept-Language`.
-- Return DTOs, never EF entities.
-- Validate all incoming data.
-- Return useful validation errors.
-- Use bearer-token authentication and policy-based authorization.
-- Consider ETags or concurrency tokens for admin updates.
-- Search only published content for employee requests.
-- Publish an OpenAPI document and generate the Angular TypeScript client/models from it, so frontend and backend contracts cannot drift.
-- Apply rate limiting to write endpoints such as feedback.
-- Cap `pageSize` (for example 50).
-
-Example list response:
+Example (placeholders; confirm against current Static Web Apps documentation):
 
 ```json
 {
-  "items": [
-    {
-      "id": "a8c4f19b-0000-0000-0000-000000000000",
-      "slug": "generate-unit-tests",
-      "title": "Generate unit tests",
-      "summary": "Generate meaningful unit tests for existing code.",
-      "difficulty": "Beginner",
-      "category": {
-        "name": "Software Development",
-        "slug": "development"
-      },
-      "isFeatured": true
+  "auth": {
+    "identityProviders": {
+      "azureActiveDirectory": {
+        "registration": {
+          "openIdIssuer": "https://login.microsoftonline.com/<TENANT_ID>/v2.0",
+          "clientIdSettingName": "AAD_CLIENT_ID",
+          "clientSecretSettingName": "AAD_CLIENT_SECRET"
+        }
+      }
     }
+  },
+  "routes": [
+    { "route": "/.auth/login/github", "statusCode": 404 },
+    { "route": "/*", "allowedRoles": ["authenticated"] }
   ],
-  "page": 1,
-  "pageSize": 12,
-  "totalCount": 1
+  "responseOverrides": {
+    "401": { "redirect": "/.auth/login/aad", "statusCode": 302 }
+  },
+  "navigationFallback": { "rewrite": "/index.html" }
 }
 ```
+
+---
+
+## 8. Content model
+
+Each content file has front matter validated against a JSON Schema (for example with Zod or Ajv) in the content build.
+
+### 8.1 Common fields (all content types)
+
+| Field | Required | Notes |
+|---|---|---|
+| `type` | Yes | `Tool`, `Prompt`, `UseCase`, `Guide`, `Guideline` |
+| `slug` | Yes | Unique per type; URL-friendly; same slug across languages |
+| `status` | Yes | `Draft`, `Published`, `Archived`; only `Published` is built |
+| `title` | Yes | Or taken from the first `#` heading |
+| `summary` | Yes | Short text for cards and search |
+| `categories` | Yes | Must exist in `categories.yml` |
+| `tags` | No | Language-neutral keywords |
+| `owner` | Yes | Person or team; display name only, no personal IDs needed |
+| `reviewAt` | Yes | Date when the content must be checked again |
+| `featured` | No | Shown on the home page |
+| `publishedAt` | No | Defaults to first publish date from Git history |
+| `related` | No | List of `type/slug` references, validated to exist |
+| `redirectFrom` | No | Old slugs, so shared links keep working |
+
+The language comes from the file name (`*.en.md`, `*.nl.md`). Every published item must have an English file. When a requested language is missing, show English and indicate that.
+
+### 8.2 Type-specific fields
+
+**Tool**
+- `provider`, `websiteUrl`.
+- `accessType` — `Web`, `Desktop`, `IDE`, `Integration`.
+- `availability` — `CompanyApproved`, `Restricted`, `Experimental`, `External`.
+- `availabilityVerifiedAt` and `availabilitySource` — required when `availability` is `CompanyApproved` or `Restricted`.
+- `licenseModel` — `Included`, `PerUserLicense`, `Free`, `Unknown`.
+- `maxDataClassification` — using the company classification scheme.
+- Access instructions in the Markdown body.
+
+**Prompt**
+- `difficulty` — `Beginner`, `Intermediate`, `Advanced`.
+- `intendedRoles`, `intendedTools` (tool slugs).
+- The prompt text is the first fenced code block or a dedicated section; optional example input/output sections.
+
+**UseCase**
+- `departments`, `difficulty`, `tools` (tool slugs).
+- `estimatedTimeSaved` — optional and clearly indicative unless validated.
+
+**Guide**
+- `difficulty`, `estimatedMinutes`.
+
+**Guideline**
+- `policyLinks` — links to authoritative internal policies.
+
+### 8.3 Reference data
+
+- `categories.yml`: `slug`, translated `name` per language, `active`.
+- `champions.yml`: `name`, `department`, `region`, `topics`, `teamsLink`. Listed with consent only.
+
+---
+
+## 9. Build output
+
+The content build writes static JSON that Angular reads. There is no API.
+
+| File | Contents |
+|---|---|
+| `/data/{lang}/index.json` | Card data for all published items (type, slug, title, summary, categories, tags, difficulty, featured, dates) |
+| `/data/{lang}/{type}/{slug}.json` | Full item including sanitized HTML body and type-specific fields |
+| `/data/{lang}/search-index.json` | Prebuilt search index |
+| `/data/categories.json`, `/data/champions.json` | Reference data |
+| `staticwebapp.config.json` | Includes redirects generated from `redirectFrom` |
+
+For a few hundred items, loading `index.json` once and filtering in the browser is fast enough. Split the files only if size becomes a problem.
 
 ---
 
@@ -617,37 +471,25 @@ Example list response:
 │   └── :slug
 ├── guidelines
 │   └── :slug
+├── champions
 ├── search
-├── about
-└── admin                (phase 2)
-    ├── content
-    ├── content/new
-    ├── content/:id
-    ├── categories
-    ├── tags
-    └── feedback
+└── about
 ```
 
-All employee routes require authentication. Admin routes additionally require the ContentAdmin role. Add a not-found page and an access-denied page.
+Add a not-found page. Access is enforced by the hosting platform (section 7), so no route guards are needed.
 
 ### 10.2 Suggested folder structure
 
 ```text
 src/app/
 ├── core/
-│   ├── auth/
-│   │   ├── auth.config.ts
-│   │   ├── auth.guard.ts
-│   │   └── auth.service.ts
-│   ├── http/
-│   │   ├── api.interceptor.ts
-│   │   └── error.interceptor.ts
-│   ├── layout/
-│   │   ├── app-shell/
-│   │   ├── header/
-│   │   ├── sidebar/
-│   │   └── footer/
-│   └── services/
+│   ├── content/          # loads generated JSON, language fallback
+│   ├── search/           # client-side search service
+│   ├── user/             # reads /.auth/me
+│   └── layout/
+│       ├── app-shell/
+│       ├── header/
+│       └── footer/
 ├── features/
 │   ├── home/
 │   ├── tools/
@@ -655,69 +497,62 @@ src/app/
 │   ├── use-cases/
 │   ├── guides/
 │   ├── guidelines/
+│   ├── champions/
 │   ├── search/
-│   └── admin/
-│       ├── dashboard/
-│       ├── content/
-│       ├── categories/
-│       └── feedback/
+│   └── about/
 ├── shared/
 │   ├── components/
 │   │   ├── content-card/
 │   │   ├── search-bar/
 │   │   ├── category-filter/
 │   │   ├── difficulty-badge/
+│   │   ├── availability-badge/
+│   │   ├── copy-button/
+│   │   ├── contact-champion/
 │   │   └── empty-state/
-│   ├── models/
-│   ├── pipes/
-│   └── utilities/
+│   └── models/           # types shared with the content build
 ├── app.routes.ts
 └── app.config.ts
 ```
 
-Feature folders can contain their own pages, components, services, models, and route configuration.
-
 ### 10.3 Frontend implementation guidance
 
-- Use standalone components and lazy-loaded feature routes.
-- Use the current supported Angular version; prefer the modern defaults (signals, built-in control flow, zoneless change detection where stable and supported by the libraries used).
-- Use MSAL Angular for Entra authentication (or a BFF, see section 7).
-- Use functional HTTP interceptors where suitable.
-- Use Angular signals for local UI state and RxJS for asynchronous streams.
-- Use reactive forms for admin content editing.
-- Use route guards for user experience, while keeping authorization enforced by the API.
-- Do not introduce NgRx unless state complexity demonstrates a real need.
-- Build reusable content cards, filters, badges, search components, and empty states.
+- Use the current supported Angular version and modern defaults: standalone components, signals, built-in control flow, lazy-loaded feature routes, zoneless change detection where stable.
+- Share TypeScript types between the content build and the Angular app so they cannot drift.
+- Render body HTML that was sanitized at build time; Angular's built-in sanitizer remains active when binding it.
 - Keep filters and search terms in the URL query string so results can be shared and bookmarked.
+- Do not introduce NgRx or other state libraries; there is little state.
 - Ensure responsive layouts and keyboard accessibility.
 - Use the approved Cegeka design system where available; otherwise Angular CDK/Angular Material with a theme aligned with Cegeka branding.
-- Use the generated API client (section 9.3) instead of handwritten HTTP models.
+- Prepare UI text for translation (Angular i18n or a runtime translation library).
 
 ---
 
 ## 11. Content lifecycle and publishing
 
-Suggested lifecycle:
-
 ```text
 Draft → Published → Archived
 ```
 
-A separate review state can be introduced later if the content approval process requires it.
+- Lifecycle is the front-matter `status` field, changed through pull requests.
+- Merging to the main branch builds and deploys the site.
+- Pull-request preview environments let reviewers see changes before merging.
 
-Rules:
+### CI checks on every pull request
 
-- Only published content is visible to employees.
-- Drafts are visible only to authorized administrators.
-- An English translation is required before publishing in the initial release.
-- Every content item should have an owner.
-- A review date should be set for content that can become outdated.
-- Archiving should replace physical deletion for normal content management.
-- Publishing, unpublishing, archiving, and significant edits should be auditable.
-- Content updates should refresh `UpdatedAt`.
-- Show administrators which items are overdue for review.
+- Front matter matches the schema for its type.
+- Slugs are unique; `related`, `intendedTools`, `tools`, and categories refer to existing items.
+- Every published item has an English file.
+- `CompanyApproved`/`Restricted` tools have a verification date and source.
+- Markdown contains no raw HTML or scripts; links are valid (internal links checked, external links optionally).
+- Images are within size and format limits.
+- No secrets or obvious personal data (for example a secret scanner).
+- Build output contains no `Draft` or `Archived` content.
 
-The admin area (phase 2) should support create, edit, preview, draft, publish, unpublish, archive, restore, categories, tags, ownership, review dates, and feedback moderation. In the content-as-code phase, the same lifecycle is expressed through the `status` front-matter field and pull requests; Git history serves as the audit trail.
+### Review reminders
+
+- A scheduled pipeline (for example weekly) lists content past or near its `reviewAt` date and creates or updates an issue/work item for the owner or AI Coach team.
+- The build can warn (not fail) on overdue content, so urgent fixes are not blocked.
 
 ---
 
@@ -725,138 +560,106 @@ The admin area (phase 2) should support create, edit, preview, draft, publish, u
 
 ### Security
 
-- Entra ID authentication.
-- Server-side authorization and role checks.
-- Validate token signature, issuer, audience, and expiry.
+- Entra ID authentication enforced by the hosting platform for every route and file.
+- Single-tenant sign-in; other identity providers disabled.
 - HTTPS everywhere.
+- Only published content in the build output.
+- Markdown converted with raw HTML disabled and sanitized at build time (for example remark/rehype with `rehype-sanitize`).
+- Security headers via `staticwebapp.config.json` (`globalHeaders`): Content Security Policy, `X-Content-Type-Options`, `Referrer-Policy`, HSTS.
+- Branch protection, required reviews, and `CODEOWNERS` on the main branch.
+- Dependency updates (Dependabot/Renovate or the company equivalent) and vulnerability scanning in CI.
+- No secrets in the repository.
 - Follow company data-classification and approved-tool policies.
-- Store secrets in Key Vault or the approved secret-management solution.
-- Validate API inputs and file uploads.
-- Sanitize rendered Markdown/HTML.
-- Restrict CORS to the actual frontend origin(s).
-- Keep administrative audit records.
-- Do not execute user prompts against company data in the MVP.
-- Avoid collecting unnecessary personal or usage data.
-- Enforce authorization independently of frontend navigation and visibility.
-- Set security headers: Content Security Policy, `X-Content-Type-Options`, `Referrer-Policy`, HSTS.
-- Rate-limit write endpoints.
-- Keep dependencies up to date (Dependabot/Renovate or the company equivalent) and scan for vulnerable packages in CI.
 
-### Privacy and compliance
+### Privacy
 
-- Feedback and interaction data are linked to employees and are personal data. Document what is collected, why, and for how long, and show a short privacy notice in the app.
-- Check with the privacy officer/DPO whether a DPIA or record of processing is needed.
-- Check whether collecting employee usage data requires consultation with employee representatives (works council) under local rules.
-- Prefer aggregated or anonymous metrics where they are enough to measure the goals in section 1.2.
-- Only use analytics cookies or telemetry that comply with company policy.
+- The app stores no personal data. Feedback goes to AI Champions through existing company channels.
+- Hosting and sign-in logs are handled by the platform; confirm retention with the platform team.
+- AI Champions are listed with consent only.
+- Optional page analytics require approval under company policy; prefer aggregated data.
 
 ### Reliability and maintainability
 
-- Structured logging and centralized monitoring.
-- Health checks for the API and dependencies.
-- Database migrations in the deployment process.
-- Automated tests in CI.
-- Document local development and deployment setup.
-- Define backup, recovery, and retention expectations with the platform team.
-- Use configuration per environment; do not hardcode secrets or environment-specific URLs.
-- Define a support owner after the experiment: who fixes bugs, applies security updates, and renews the app registration secret/certificate (prefer managed identity and certificates over client secrets).
-- Indicative performance target: pages and API list/search responses under 1 second at expected internal load.
+- No server-side runtime to patch or scale; the hosting platform serves static files.
+- Deployments are reproducible from Git; roll back by redeploying an earlier commit.
+- Document local development (`npm start` with local content) and the contribution process (`CONTRIBUTING.md`).
+- Define a support owner after the experiment: who merges content, updates dependencies, and renews the app registration secret.
+- Indicative performance target: pages interactive within 2 seconds on a typical office connection.
 
 ### Accessibility and usability
 
 - Target WCAG 2.2 level AA.
 - Responsive desktop and mobile layouts.
-- Keyboard navigation.
-- Visible focus states.
+- Keyboard navigation and visible focus states.
 - Semantic headings and controls.
 - Sufficient contrast.
-- Accessible form labels and validation messages.
 - Clear loading, empty, and error states.
 
 ---
 
 ## 13. Testing strategy
 
-Test the application at unit, integration, and end-to-end levels.
-
-### Backend
-- Domain and application service unit tests.
-- API integration tests.
-- Authentication and authorization tests.
-- Validation and publishing-rule tests.
-- Search and filtering tests.
-- Content import validation tests (invalid front matter, duplicate slugs, missing English translation, unsafe Markdown).
+### Content build
+- Unit tests for schema validation, Markdown conversion, sanitization, and search-index generation.
+- Tests with invalid fixtures: missing fields, duplicate slugs, unknown references, missing English file, raw HTML/scripts.
 
 ### Frontend
-- Angular component and service unit tests.
-- Route and guard tests.
-- Admin form validation tests.
-- Accessibility checks (for example axe in end-to-end tests).
-- End-to-end tests for important employee and admin flows (for example Playwright).
+- Component and service unit tests.
+- End-to-end tests for important flows (for example Playwright): browse, filter, search, view detail, copy prompt, contact a champion.
+- Accessibility checks in end-to-end tests (for example axe).
+
+### Deployment smoke tests
+- An unauthenticated request to a page and to a `/data/...` file is redirected to login.
+- Signed-in users can load the home page.
 
 ### Critical acceptance/security tests
 
-1. Unauthenticated users cannot access protected endpoints.
-2. An employee cannot call admin APIs successfully.
-3. Draft content never appears in employee listings or search.
-4. Publishing fails if the required English translation is missing.
-5. Archived content is not available through normal employee detail routes.
-6. Search returns only published content.
-7. Invalid input is rejected with useful validation errors.
-8. Concurrent admin edits are handled safely.
-9. Markdown cannot execute arbitrary scripts.
-10. File uploads, if enabled, are validated and restricted.
-11. Content import rejects invalid files and never publishes content with `status: Draft`.
-12. A user can register only one helpful/not-helpful vote per content item.
+1. Unauthenticated users cannot load any page, JSON, or media file.
+2. Only Cegeka-tenant accounts can sign in.
+3. Draft and archived content never appear in the build output, listings, or search.
+4. The build fails if a published item lacks an English file.
+5. The build fails on invalid front matter or broken internal references.
+6. Markdown cannot inject scripts.
+7. Old slugs listed in `redirectFrom` redirect to the current page.
 
 ---
 
 ## 14. Development roadmap
 
-The following estimate assumes one developer and reasonably timely access to approved infrastructure. It excludes approval delays, infrastructure provisioning delays, and the time needed to create and validate the initial content. Add a contingency of about 20–30%; first-time setup of Entra, pipelines, and Azure resources often takes longer than expected.
+The estimate assumes one developer and reasonably timely access to approved infrastructure. It excludes approval delays and the time needed to write the initial content. Add a contingency of about 20–30%; first-time setup of Entra and hosting often takes longer than expected.
 
 | Epic | Scope | Estimate |
 |---|---|---:|
-| 1. Project foundation | Angular and .NET setup, conventions, database/migrations, Entra auth, OpenAPI client generation, CI/CD | 4–5 days |
-| 2. Application shell | Layout, responsive design, theme, UI i18n setup, route guards, reusable content cards | 2–3 days |
-| 3. Content foundation | Entities, persistence, services, publishing rules, categories/tags, content-as-code import and validation | 4–6 days |
-| 4. Employee experience | Home, catalogues, details, related content, search/filter, feedback | 5–7 days |
-| 5. Pilot readiness | Tests, accessibility, security review, privacy notice, monitoring, responsive polish, pilot | 4–5 days |
-| **MVP total (without admin UI)** |  | **19–26 developer days** |
-| 6. Admin experience (phase 2) | Dashboard, content list, CRUD with Markdown editor and preview, publish/archive/restore, media upload, tags, feedback moderation, audit, review-due list | 6–9 days |
+| 1. Foundation | Angular setup, repository structure, CI/CD, Static Web Apps, Entra login, infrastructure as code | 3–4 days |
+| 2. Content pipeline | Schema, validation, Markdown → sanitized HTML/JSON, search index, redirects, CI checks | 3–4 days |
+| 3. Application shell | Layout, responsive design, theme, UI i18n setup, reusable cards and badges | 2–3 days |
+| 4. Employee experience | Home, catalogues, details, related content, search/filter, champions, about | 4–6 days |
+| 5. Pilot readiness | Tests, accessibility, security headers, review-reminder pipeline, contribution docs, pilot | 3–4 days |
+| **Total** |  | **15–21 developer days** |
 
 ### Suggested milestones
 
 **Milestone 0 — Experiment (walking skeleton)**
-- Repository and application structure.
-- Entra authentication against the Cegeka tenant.
-- Application shell and navigation.
-- Content-as-code import of a handful of Markdown items.
-- Homepage, prompts list/detail with copy action, and tools list/detail.
-- Deployed to one shared test environment and shown to a few colleagues.
+- Repository structure and CI/CD.
+- Static Web Apps with Entra login restricted to the Cegeka tenant.
+- Content build for prompts and tools only.
+- Home page, prompts list/detail with copy action, tools list/detail.
+- A handful of real content items.
+- Shown to a few colleagues and AI Champions.
 - Decision point: continue to the MVP, adjust, or stop.
 
-**Milestone 1 — Content platform**
-- Full database model and migrations.
-- Content API for all content types.
-- Tools, prompts, use cases, guides, and guidelines.
+**Milestone 1 — Content site**
+- All content types, related content, and redirects.
 - Search and filters.
+- AI Champions page and contact links.
 
 **Milestone 2 — Pilot readiness**
-- Feedback.
-- Security, privacy, and accessibility checks.
-- Monitoring and deployment.
-- Initial content population (through content files and pull requests).
-- Pilot with 10–20 employees across different departments, measured against section 1.2.
+- Security, accessibility, and privacy checks.
+- Review-reminder pipeline and contribution guide.
+- Initial content population through pull requests.
+- Pilot with 10–20 employees across different departments, measured against section 1.3.
 
-**Milestone 3 — Content administration (phase 2)**
-- Admin authorization.
-- Content CRUD and preview.
-- Draft/publish/archive/restore workflow.
-- Categories, tags, ownership, review dates, media upload.
-- Migrate from content-as-code to UI-based editing (or keep both, with one clear source of truth per item).
-
-A good first implementation step is Milestone 0: the application shell and homepage with company authentication and a few imported content items. This creates an early, visible result before the full content backend is complete.
+Start with Milestone 0. It gives a visible, deployed result within a few days and tests the riskiest parts first: hosting, login, and the content pipeline.
 
 ---
 
@@ -864,23 +667,19 @@ A good first implementation step is Milestone 0: the application shell and homep
 
 The MVP is ready for pilot when:
 
-- Employees can sign in with their Cegeka company account.
-- Published tools, prompts, use cases, guides, and guidelines can be browsed.
-- Content detail pages are available.
+- Employees can sign in with their Cegeka company account, and nobody else can.
+- Published tools, prompts, use cases, guides, and guidelines can be browsed, with detail pages.
 - Search and filtering work across published content.
 - Prompts can be copied easily.
-- Content can be added and updated through validated content files and pull requests.
-- Content has an owner and review date.
-- English is supported and the model is ready for additional languages.
-- API authorization is enforced server-side.
+- Employees can find and contact an AI Champion from every content page.
+- Content can be added and updated through validated pull requests, with preview before merge.
+- Content has an owner and review date, and overdue content is reported automatically.
+- English is supported and the structure is ready for additional languages.
 - Critical automated tests pass.
-- Monitoring and logging are configured.
 - Security, privacy, and accessibility reviews have been completed to the agreed level.
 - Initial content is populated and reviewed.
-- Success metrics (section 1.2) are agreed and can be measured.
-- A pilot group has tested the application and feedback has been addressed.
-
-Phase 2 is done when authorized admins can create, edit, preview, publish, unpublish, archive, and restore content, and manage categories, tags, media, and feedback through the UI.
+- Success metrics (section 1.3) are agreed and can be measured.
+- A pilot group has tested the site and feedback has been addressed.
 
 ---
 
@@ -891,25 +690,28 @@ Phase 2 is done when authorized admins can create, edit, preview, publish, unpub
 | Risk | Mitigation |
 |---|---|
 | Single builder (bus factor of one) | Keep documentation, ADRs, and setup scripts current; keep the stack mainstream |
-| Content goes stale after launch | Owners and review dates; review-due list; AI Coach team accountable |
-| Showing a tool as approved when it is not | Status requires a recorded source and verification date |
-| Approvals (architecture, security, identity, privacy) take longer than development | Request them early, in parallel with Milestone 0 |
+| Content goes stale after launch | Owners, review dates, and automated review reminders |
+| Contributors find Git difficult | Web editor, templates per content type, short contribution guide, AI Coach team helps |
+| Showing a tool as approved when it is not | CI requires a verification date and source |
+| Feedback gets lost because it is not stored | Clear process for AI Champions to pass feedback to the AI Coach team |
+| Little usage data to judge the experiment | Pilot survey and champion feedback; optional approved analytics |
+| Approvals (architecture, security, identity) take longer than development | Request them early, in parallel with Milestone 0 |
 | Overlap with existing intranet/SharePoint content | Link to authoritative sources instead of copying them |
-| Experiment becomes production without hardening | Explicit decision point after Milestone 0 and pilot |
 
 ### Open questions
 
-1. Which database is the Cegeka standard: Azure SQL or PostgreSQL?
-2. Is there a Cegeka design system or Angular component library to use?
-3. App roles or Entra groups for `ContentAdmin`? Who assigns them?
-4. Are guest/external accounts allowed?
+1. Is Azure Static Web Apps (Standard) approved, or should App Service with Easy Auth be used?
+2. GitHub or Azure DevOps for the repository and pipelines?
+3. Are guest/external accounts allowed?
+4. Is there a Cegeka design system or Angular component library to use?
 5. Which data-classification scheme should tool pages reference?
 6. Who confirms tool availability status, and where is that recorded?
-7. Is a DPIA or works-council consultation needed for feedback/usage data?
-8. Which languages come after English, and when?
-9. Who owns support and maintenance after the experiment?
+7. Who are the AI Champions, and have they agreed to be listed?
+8. Is optional page analytics allowed, and under which conditions?
+9. Which languages come after English, and when?
+10. Who owns support and maintenance after the experiment?
 
-Record decisions as short Architecture Decision Records (ADRs) in the repository, for example in `docs/adr/`.
+Record decisions as short Architecture Decision Records (ADRs) in `docs/adr/`.
 
 ---
 
@@ -918,32 +720,29 @@ Record decisions as short Architecture Decision Records (ADRs) in the repository
 When using this document as context in an IDE-based AI assistant, follow these instructions:
 
 1. Treat this document as the product and architecture baseline, not as permission to make unapproved infrastructure or identity decisions.
-2. First inspect the existing repository, solution structure, package versions, coding conventions, and any existing Cegeka templates before generating files.
+2. Inspect the existing repository, package versions, and conventions before generating files.
 3. Prefer existing project conventions and approved dependencies over introducing new frameworks or packages.
 4. Do not generate the entire application in one step. Implement one milestone or vertical slice at a time.
 5. Before making large structural changes, explain the proposed changes and identify assumptions.
-6. Keep frontend and backend contracts aligned. Use explicit DTOs and validation.
-7. Implement API authorization from the beginning; do not postpone it until after the UI.
-8. Add tests alongside features, especially for publishing rules and authorization.
-9. Do not invent Entra tenant IDs, client IDs, secrets, API URLs, subscription details, or company-specific configuration. Use clearly named configuration placeholders and document what an administrator must provide.
-10. Do not claim that a tool, provider, or AI service is company-approved unless that status is explicitly confirmed.
-11. Keep the MVP free of LLM integrations unless the scope is explicitly changed.
-12. Maintain a concise implementation plan and update it as milestones are completed.
-13. Ask focused questions only when a decision blocks safe or correct implementation. Otherwise, make conservative, clearly documented assumptions.
-14. Prioritize a working, maintainable, secure vertical slice over speculative abstractions.
-15. Do not build the admin UI before Milestone 3 unless the scope is explicitly changed; use content-as-code (section 4.2) instead.
+6. Do not add a backend, database, admin UI, or in-app feedback storage unless the scope is explicitly changed.
+7. Keep the content build and Angular types aligned; share the types.
+8. Never let `Draft` or `Archived` content reach the build output.
+9. Add tests alongside features, especially for content validation and sanitization.
+10. Do not invent Entra tenant IDs, client IDs, secrets, URLs, subscription details, or company-specific configuration. Use clearly named placeholders and document what an administrator must provide.
+11. Do not claim that a tool, provider, or AI service is company-approved unless that status is explicitly confirmed.
+12. Keep the MVP free of LLM integrations unless the scope is explicitly changed.
+13. Maintain a concise implementation plan and update it as milestones are completed.
+14. Ask focused questions only when a decision blocks safe or correct implementation. Otherwise, make conservative, clearly documented assumptions.
 
 ### Recommended first task for the IDE assistant
 
-If the repository is empty (greenfield), skip the inspection below. Instead, propose the solution layout, tooling versions, and the Milestone 0 plan, and wait for confirmation before scaffolding.
+If the repository is empty (greenfield), propose the repository layout, tooling versions, and the Milestone 0 plan, and wait for confirmation before scaffolding.
 
-Otherwise, inspect the current repository and report:
+Otherwise, inspect the repository and report:
 
-- Existing frontend/backend structure and framework versions.
-- Existing authentication and authorization setup.
-- Existing database and migration approach.
+- Existing structure and framework versions.
+- Existing CI/CD and hosting configuration.
 - Existing UI component library and design system.
-- Existing CI/CD and deployment conventions.
-- Any conflicts between the current repository and this blueprint.
+- Any conflicts between the repository and this blueprint.
 
 Do not modify files during this initial inspection. After reporting findings, propose the smallest first implementation milestone.
